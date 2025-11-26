@@ -52,4 +52,7 @@ MicrosoftGraphActivityLogs
 | project-reorder TimeGenerated, Resource, Action, AffectedMailbox,UserOrAppId,ActionPerformedBy, RequestUri, IPAddress, Location
 | summarize OperationsPerformed=count(), make_set(IPAddress), make_set(UserAgent), make_set(AffectedMailbox) by ActionPerformedBy, UserOrAppId //, bin(TimeGenerated,1h)
 ```
-## Related links
+
+## Mitre Att&ck Techniques
+
+- [T1671 - Cloud Application Integration](https://attack.mitre.org/techniques/T1671/)
