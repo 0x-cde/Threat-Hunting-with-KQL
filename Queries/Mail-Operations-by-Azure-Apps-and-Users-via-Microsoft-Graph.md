@@ -55,4 +55,4 @@ MicrosoftGraphActivityLogs
 
 ## Mitre Att&ck Techniques
 
-- [T1671 - Cloud Application Integration](https://attack.mitre.org/techniques/T1671/)
+- Persistence -  [T1671 - Cloud Application Integration](https://attack.mitre.org/techniques/T1671/)
