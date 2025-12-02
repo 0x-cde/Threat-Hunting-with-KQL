@@ -13,6 +13,7 @@ It is possible that specific developers might use similar action to test api cal
 
 For this Hunt the website https://lots-project.com/ by [mrd0x](https://github.com/mrd0x) is used to get a list of known cloud storage provider urls. 
 
+
 ## Kusto Query
 
 ``` 
@@ -33,8 +34,9 @@ let ExfiltrationSites = externaldata(results: dynamic)
 DeviceProcessEvents
 | where TimeGenerated > ago(90d)
 | where FileName has "curl"
-| where ProcessCommandLine matches regex @"\b(?:https?://(?:\d{1,3}\.){3}\d{1,3}\b)" or (ProcessCommandLine has_any (ExfiltrationSites) and ProcessCommandLine !has "-o ")
+| where ProcessCommandLine matches regex @"\b(?:https?://(?:\d{1,3}\.){3}\d{1,3}\b)" or ((ProcessCommandLine has_any (ExfiltrationSites) or ProcessCommandLine has_any("temp.sh","transfer.sh","termbin.com")) and ProcessCommandLine !has "-o ")
 | extend RemoteIP=tostring(split(extract(@"\b(?:https?://(?:\d{1,3}\.){3}\d{1,3}\b)",0,ProcessCommandLine),"//")[1])
+// | where * contains "temp.sh"
 | where (ipv4_is_in_any_range(RemoteIP,"0.0.0.0/8","100.64.0.0/10","127.0.0.0/8","169.254.0.0/16","192.0.0.0/24","192.0.2.0/24","192.88.99.0/24","198.18.0.0/15","198.51.100.0/24","203.0.113.0/24","224.0.0.0/4","233.252.0.0/24","240.0.0.0/4")==false and ipv4_is_private(RemoteIP)==false) or isempty(RemoteIP)
 | project-reorder TimeGenerated, AccountDomain,AccountName, RemoteIP, ProcessCommandLine, FileName, InitiatingProcessCommandLine
 ```
@@ -45,3 +47,6 @@ DeviceProcessEvents
 - Defence Evasion - [T1202 - Indirect Command Execution](https://attack.mitre.org/techniques/T1202/)
 - Exfiltration - [T1537 - CTransfer Data to Cloud Account](https://attack.mitre.org/techniques/T1537/)
 - Resource Development - [T1608 - Stage Capabilities](https://attack.mitre.org/techniques/T1608/)
+
+## Updates
+2025-12-02: Added clause for "temp.sh","transfer.sh","termbin.com" until those are integrated in the lots-project
