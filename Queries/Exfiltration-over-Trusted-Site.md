@@ -4,7 +4,7 @@
 
 In a lot organizations there is a list of approved cloud storage providers. In a perfect environment your servers should only access very specific cloud storage services and your users would only use the storage provider that the company has selected.
 
-For this Hunt I utilize the knowledge provided on https://lots-project.com/ by [mrd0x](https://github.com/mrd0x). The following query will help audit your environment for trafic to known Cloud Storage Services. 
+The following query will help audit your environment for trafic to known Cloud Storage Services. 
 
 ## Expected outcomes and Suggested actions
 
@@ -18,7 +18,7 @@ The query is by default set to check only for Servers. If you want to check for 
 
 In order to filter out expected cloud storage providers for your organization, you will have to comment out or edit the appropriate lines.
 
-Since the query is parsing raw html, it is possible that if the external source changes the formating then this query might not work.
+For this Hunt the website https://lots-project.com/ by [mrd0x](https://github.com/mrd0x) is used to get a list of known cloud storage provider urls. Since the query is parsing raw html, it is possible that if the external source changes the formating then this query might not work.
 
 ## Kusto Query
 
