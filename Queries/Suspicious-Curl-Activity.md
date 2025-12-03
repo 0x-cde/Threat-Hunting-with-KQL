@@ -36,9 +36,9 @@ DeviceProcessEvents
 | where FileName has "curl"
 | where ProcessCommandLine matches regex @"\b(?:https?://(?:\d{1,3}\.){3}\d{1,3}\b)" or ((ProcessCommandLine has_any (ExfiltrationSites) or ProcessCommandLine has_any("temp.sh","transfer.sh","termbin.com")) and ProcessCommandLine !has "-o ")
 | extend RemoteIP=tostring(split(extract(@"\b(?:https?://(?:\d{1,3}\.){3}\d{1,3}\b)",0,ProcessCommandLine),"//")[1])
-// | where * contains "temp.sh"
+| extend RemoteURL=extract(@"(\b(?:https?:\/\/([-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}[a-z,0-9]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?))\b)",0,ProcessCommandLine)
 | where (ipv4_is_in_any_range(RemoteIP,"0.0.0.0/8","100.64.0.0/10","127.0.0.0/8","169.254.0.0/16","192.0.0.0/24","192.0.2.0/24","192.88.99.0/24","198.18.0.0/15","198.51.100.0/24","203.0.113.0/24","224.0.0.0/4","233.252.0.0/24","240.0.0.0/4")==false and ipv4_is_private(RemoteIP)==false) or isempty(RemoteIP)
-| project-reorder TimeGenerated, AccountDomain,AccountName, RemoteIP, ProcessCommandLine, FileName, InitiatingProcessCommandLine
+| project-reorder TimeGenerated, AccountDomain,AccountName, RemoteIP, RemoteURL, ProcessCommandLine, FileName, InitiatingProcessCommandLine
 ```
 
 ## Mitre Att&ck Techniques

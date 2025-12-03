@@ -17,7 +17,7 @@ The volume of operations performed; the IP addresses; and uncommon user agents (
 
 ## Additional Info
 
-During testing I noticed that a lot of legitimate user activity generates Graph requests, and filtering out by checking the user agent was an easy way.User Agents are not an optimal way to filter activity since they can be easily manipulated. The user agent _TeamsMiddleTier/1.0a$*+_ is also expected, since it is a known useragent for Teams backend operations.
+During testing I noticed that a lot of legitimate user activity generates Graph requests, and filtering out by checking the user agent was an easy way. User Agents are not an optimal way to filter activity since they can be easily manipulated. The user agent _TeamsMiddleTier/1.0a$*+_ is also expected, since it is a known useragent for Teams backend operations.
 
 Depending on your threat hunting appetite, you might want to add to search for the action _"/mailFolders"_ as well. This will display lookups that are made for specific folders, but keep in mind that results will increase drastically.
 
@@ -28,29 +28,28 @@ let timeframe=ago(90d);
 MicrosoftGraphActivityLogs
 | where TimeGenerated > timeframe
 | where isempty(DeviceId)
-| where (UserAgent has_any ("mozilla","Chrome","Safari","TeamsMiddleTier/1.0a$*+"))==false 
 | extend Action=trim_start("https://graph.microsoft.com/",RequestUri)
 | extend Action=trim_start("/",tostring(split(Action,"?")[0]))
 | extend Action=replace_string(Action,"//","/")
-| where Action has_any ("/messages/" )
+| where Action has_any ("/messages/")
 | extend Resource=iff(tostring(split(tolower(tostring(split(Action,"/")[1])),"(")[0]) matches regex "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",tostring(split(tolower(tostring(split(Action,"/")[2])),"(")[0]),tostring(split(tolower(tostring(split(Action,"/")[1])),"(")[0]))
 | where Resource == "users"
 | extend AffectedMailbox=tostring(split(Action,"/")[2])
-| extend UserOrAppId=iff(isempty(ServicePrincipalId),UserId,ServicePrincipalId)
+| extend UserId_or_ServicePrincipalId=iff(isempty(ServicePrincipalId),UserId,ServicePrincipalId)
 | join kind=leftouter (AADServicePrincipalSignInLogs
     | where TimeGenerated > timeframe
-    | distinct ServicePrincipalName, AppId,  ServicePrincipalId) on $left.UserOrAppId==$right.ServicePrincipalId
+    | distinct ServicePrincipalName, AppId,  ServicePrincipalId) on $left.UserId_or_ServicePrincipalId==$right.ServicePrincipalId
 | join kind=leftouter (IdentityInfo
     | where TimeGenerated > timeframe
     | distinct AccountObjectId, AccountUPN) on $left.AffectedMailbox==$right.AccountObjectId
 | join kind=leftouter (IdentityInfo
     | where TimeGenerated > timeframe
-    | distinct AccountObjectId, AccountUPN) on $left.UserOrAppId==$right.AccountObjectId
+    | distinct AccountObjectId, AccountUPN) on $left.UserId_or_ServicePrincipalId==$right.AccountObjectId
 | extend AffectedMailbox=iff(tolower(AccountObjectId)==tolower(AffectedMailbox),tolower(AccountUPN),tolower(AffectedMailbox))
 | project-rename  ActionPerformedBy=AccountUPN1
-| extend ActionPerformedBy=iff(isempty(ServicePrincipalId),strcat("🧑‍💼 User: ",tolower(ActionPerformedBy)),strcat("🖥️ AzureApp: ",ServicePrincipalName))
-| project-reorder TimeGenerated, Resource, Action, AffectedMailbox,UserOrAppId,ActionPerformedBy, RequestUri, IPAddress, Location
-| summarize OperationsPerformed=count(), make_set(IPAddress), make_set(UserAgent), make_set(AffectedMailbox) by ActionPerformedBy, UserOrAppId //, bin(TimeGenerated,1h)
+| extend ActionPerformedBy=iff(isempty(ServicePrincipalId),strcat("🧑‍💼 User: ",tolower(ActionPerformedBy)," via the app: ",AppId),strcat("🖥️ AzureApp: ",ServicePrincipalName))
+| project-reorder TimeGenerated, Resource, Action, AffectedMailbox,UserId_or_ServicePrincipalId,ActionPerformedBy, RequestUri, IPAddress, Location
+| summarize OperationsPerformed=count(), make_set(IPAddress), make_set(UserAgent), NumberOfMailboxes=dcount(AffectedMailbox),make_set(AffectedMailbox) by ActionPerformedBy, UserId_or_ServicePrincipalId
 ```
 
 ## Mitre Att&ck Techniques
