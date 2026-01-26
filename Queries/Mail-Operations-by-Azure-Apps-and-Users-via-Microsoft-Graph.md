@@ -31,9 +31,10 @@ MicrosoftGraphActivityLogs
 | extend Action=trim_start("https://graph.microsoft.com/",RequestUri)
 | extend Action=trim_start("/",tostring(split(Action,"?")[0]))
 | extend Action=replace_string(Action,"//","/")
-| where Action has_any ("/messages/")
+| where ResponseStatusCode == 200
+| where Action has_any ("/messages/","/MailFolders/")
 | extend Resource=iff(tostring(split(tolower(tostring(split(Action,"/")[1])),"(")[0]) matches regex "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",tostring(split(tolower(tostring(split(Action,"/")[2])),"(")[0]),tostring(split(tolower(tostring(split(Action,"/")[1])),"(")[0]))
-| where Resource == "users"
+| where Resource =~ "users"
 | extend AffectedMailbox=tostring(split(Action,"/")[2])
 | extend UserId_or_ServicePrincipalId=iff(isempty(ServicePrincipalId),UserId,ServicePrincipalId)
 | join kind=leftouter (AADServicePrincipalSignInLogs
@@ -41,15 +42,21 @@ MicrosoftGraphActivityLogs
     | distinct ServicePrincipalName, AppId,  ServicePrincipalId) on $left.UserId_or_ServicePrincipalId==$right.ServicePrincipalId
 | join kind=leftouter (IdentityInfo
     | where TimeGenerated > timeframe
-    | distinct AccountObjectId, AccountUPN) on $left.AffectedMailbox==$right.AccountObjectId
+    | project-rename AffectedMailboxUPN=AccountUPN
+    | distinct AccountObjectId, AffectedMailboxUPN) on $left.AffectedMailbox==$right.AccountObjectId
 | join kind=leftouter (IdentityInfo
     | where TimeGenerated > timeframe
     | distinct AccountObjectId, AccountUPN) on $left.UserId_or_ServicePrincipalId==$right.AccountObjectId
-| extend AffectedMailbox=iff(tolower(AccountObjectId)==tolower(AffectedMailbox),tolower(AccountUPN),tolower(AffectedMailbox))
-| project-rename  ActionPerformedBy=AccountUPN1
-| extend ActionPerformedBy=iff(isempty(ServicePrincipalId),strcat("🧑‍💼 User: ",tolower(ActionPerformedBy)," via the app: ",AppId),strcat("🖥️ AzureApp: ",ServicePrincipalName))
+| extend AffectedMailbox=iff(tolower(AccountObjectId)==tolower(AffectedMailbox),tolower(AffectedMailboxUPN),tolower(AffectedMailbox))
+| join kind=leftouter (AADNonInteractiveUserSignInLogs
+    | where TimeGenerated > timeframe
+    | distinct AppDisplayName, AppId) on AppId
+| project-rename  ActionPerformedBy=AccountUPN
+| where AffectedMailbox != ActionPerformedBy
+| extend ActionPerformedBy=iff(isempty(ServicePrincipalId),strcat("🧑‍💼 User: ",tolower(ActionPerformedBy)," via the app: ",AppDisplayName),strcat("🖥️ AzureApp: ",ServicePrincipalName))
 | project-reorder TimeGenerated, Resource, Action, AffectedMailbox,UserId_or_ServicePrincipalId,ActionPerformedBy, RequestUri, IPAddress, Location
-| summarize OperationsPerformed=count(), make_set(IPAddress), make_set(UserAgent), NumberOfMailboxes=dcount(AffectedMailbox),make_set(AffectedMailbox) by ActionPerformedBy, UserId_or_ServicePrincipalId
+| where UserAgent !startswith "TeamsMiddleTier" and UserAgent !startswith "Microsoft Office"
+| summarize OperationsPerformed=count(), make_set(IPAddress), make_set(UserAgent), NumberOfMailboxes=dcount(AffectedMailbox),make_set(AffectedMailbox,50), min(TimeGenerated), max(TimeGenerated) by ActionPerformedBy, UserId_or_ServicePrincipalId
 ```
 
 ## Mitre Att&ck Techniques
