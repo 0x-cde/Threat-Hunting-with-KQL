@@ -9,3 +9,4 @@ Happy hunting.
 - [Mail Operations by Azure Apps and Users via Microsoft Graph](./Queries/Mail-Operations-by-Azure-Apps-and-Users-via-Microsoft-Graph.md)
 - [Suspicious Curl Activity](./Queries/Suspicious-Curl-Activity.md)
 - [CVE-2026-21509](./Queries/CVE-2026-21509.md)
+- [CVE-2026-20841](./Queries/CVE-2026-20841.md)
