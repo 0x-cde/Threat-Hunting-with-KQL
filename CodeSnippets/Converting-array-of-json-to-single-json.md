@@ -2,9 +2,9 @@
 
 While working with Unified Audit Logs (this can be found in other Microsoft product logs as well) I came accross the image multiple times and it is extremely annoying to work with this format.
 
-![alt text](/Threat-Hunting-with-KQL/CodeSnippets/Images/image.png)
+![alt text](./Images/image.png)
 
-![alt text](/Threat-Hunting-with-KQL/CodeSnippets/Images/image2.png)
+![alt text](./Images/image2.png)
 
 Because I suspect many of you have the same issue here are some KQL snippets you can use for managing these annoying log fields. 
 

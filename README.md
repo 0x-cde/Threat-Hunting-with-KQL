@@ -3,7 +3,11 @@ This repository contains battle-tested and proven Threat Hunting KQL queries tha
 
 Happy hunting.
 
-## Contents
+## KQL Snippets
+
+- [Converting an array with multiple JSON to a single JSON](./CodeSnippets//Converting-array-of-json-to-single-json.md)
+
+## Hunts
 
 - [AI Agent Usage](./Queries/AI-Agent-Usage.md)
 - [Exfiltration over Trusted Site](./Queries/Exfiltration-over-Trusted-Site.md)
