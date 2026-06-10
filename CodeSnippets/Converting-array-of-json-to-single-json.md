@@ -23,7 +23,9 @@ It is important for the `| summarize Params=make_set(Params), arg_max(TimeGenera
 ```
 
 #### 2nd method
-This will only show you the collumns, so you might want to join this with the original results
+This will only show you the collumns, so you might want to join this with the original results.
+
+This method is not recommended because pivot generates a dynamic set of columns, so later action might fail because a column is missing.
 
 ```
 | extend Parameters=AuditData.Parameters
